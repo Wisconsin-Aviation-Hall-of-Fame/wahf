@@ -122,53 +122,6 @@ figcaption {
 
 
 <div class="row">
-    <!-- magazine preview -->
-    {% get_current_magazine_issue as current_magazine_issue %}
-    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12 p-0 mb-1 " onclick="window.location='{% slugurl current_magazine_issue.slug %}';">
-        <div class="m-3 article-frontpage rounded">
-            <div class="article-hide">
-                <a href="{% slugurl current_magazine_issue.slug %}">{{ current_magazine_issue.headline }}</a>
-            </div>
-
-            <div class="article-img-wrapper">
-                {% image current_magazine_issue.cover width-900 class="img-fluid" loading="lazy" %}
-            </div>
-
-            <div class="article-description">
-                    {{ current_magazine_issue.blurb|safe }}
-
-                    <span class="read-more">
-                        <i data-feather="arrow-right-circle"></i> Read <i>Forward in Flight</i>
-                    <span>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12 p-0 mb-1" onclick="window.location='{% slugurl page.non_member_link_page.slug %}';">
-        <div class="m-3 article-large article-frontpage rounded">
-
-            <div class="article-hide">
-                <a href="{% slugurl page.non_member_link_page.slug %}">Become a WAHF Member</a>
-            </div>
-
-            <div class="article-img-wrapper">
-                {% image page.non_member_image fill-900x900 class="img-fluid" loading="lazy" %}
-            </div>
-
-            <div class="article-description">
-                {{ page.non_member_blurb|safe }}
-
-                <span class="read-more">
-                    <i data-feather="arrow-right-circle"></i> Become a Member
-                <span>
-
-                <a href="{% slugurl page.non_member_link_page.slug %}" class="text-white fw-bold" aria-label="Become a Member">
-
-                </a>
-            </div>
-        </div>
-    </div>
 
     {% for card in page.home_page_cards.all %}
     <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12 p-0 mb-1" onclick="window.location='{% slugurl card.link_page.slug %}';">
@@ -178,11 +131,18 @@ figcaption {
             </div>
 
             <div class="article-img-wrapper">
-                {% image card.image fill-900x900 class="img-fluid" loading="lazy" %}
+                {% if card.heading %}
+                    {% image card.image fill-900x900 class="img-fluid" loading="lazy" %}
+                {% else %}
+                    <!-- magazine previews do not have a heading set -->
+                    {% image card.image width-900 class="img-fluid" loading="lazy" %}
+                {% endif %}
 
+                {% if card.heading %}
                 <div class="article-title">
                     <h2>{{ card.heading }}</h2>
                 </div>
+                {% endif %}
             </div>
 
             <div class="article-description">
@@ -205,7 +165,12 @@ figcaption {
                     {{ card.blurb|safe }}
 
                     <span class="read-more">
-                        <i data-feather="arrow-right-circle"></i> Read&nbsp;More
+                        <i data-feather="arrow-right-circle"></i>
+                        {% if card.link_text %}
+                            {{ card.link_text }}
+                        {% else %}
+                            Read&nbsp;More
+                        {% endif %}
                     <span>
             </div>
         </div>
