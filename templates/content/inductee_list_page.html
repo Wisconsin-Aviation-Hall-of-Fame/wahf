@@ -16,14 +16,47 @@
 .inductee-item:hover div a img {
     border-color: #c5ebff;
 }
+
+.page-title-container {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.inductee-year-header {
+    border-top: 2px solid #cecece;
+    padding-top: 15px;
+    margin-top: 25px;
+    font-size: 3rem;
+    font-weight: bold;
+}
 </style>
 {% endblock %}
 
 
 {% block content %}
 
+<div class="p-2 mb-3">
+    <p>
+        <a href="?">BY NAME</a> |
+        <a href="?year">BY INDUCTED YEAR</a>
+    </p>
+</div>
+
 <div class="container">
+
 {% for inductee in inductee_list %}
+    {% if view_type == "year" %}
+        {% ifchanged inductee.inducted_date|date:"Y" %}
+            <div class="inductee-year-header">
+                {% if inductee.inducted_date %}
+                    {{ inductee.inducted_date|date:"Y" }}
+                {% else %}
+                    <i>Inductee Year Not Available</i>
+                {% endif %}
+            </div>
+        {% endifchanged %}
+    {% endif %}
+
     <div class="row my-3 inductee-item" onclick="window.location='{% pageurl inductee %}';">
 
         <div class="col-md-auto col-3 col-auto">

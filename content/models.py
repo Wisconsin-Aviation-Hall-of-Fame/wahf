@@ -2,6 +2,7 @@ import datetime
 
 from django.conf import settings
 from django.db import models
+from django.db.models import F
 from django.utils.text import slugify
 from django_extensions.db.fields import AutoSlugField
 from modelcluster.fields import ParentalKey
@@ -450,12 +451,19 @@ class InducteeListPage(OpenGraphMixin, Page):
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
 
-        context["inductee_list"] = (
-            InducteeDetailPage.objects.child_of(self)
-            .select_related("photo")
-            .order_by("last_name", "first_name")
-            .live()
+        inductee_qs = (
+            InducteeDetailPage.objects.child_of(self).select_related("photo").live()
         )
+
+        order_by = ["last_name", "first_name"]
+
+        if "year" in request.GET:
+            order_by.insert(0, F("inducted_date").desc(nulls_last=True))
+            context["view_type"] = "year"
+        else:
+            context["view_type"] = "name"
+
+        context["inductee_list"] = inductee_qs.order_by(*order_by)
 
         return context
 
@@ -527,7 +535,7 @@ class InducteeDetailPage(OpenGraphMixin, Page):
         blank=True,
     )
 
-    inducted_date = models.DateField(null=True, blank=True)
+    inducted_date = models.DateField(null=True, blank=True, db_index=True)
     born_date = models.DateField(null=True, blank=True)
     died_date = models.DateField(null=True, blank=True)
     born_year = models.PositiveSmallIntegerField(null=True, blank=True)
