@@ -29,16 +29,22 @@
     font-size: 3rem;
     font-weight: bold;
 }
+
+.header-links-sorting a {
+    text-transform: uppercase;
+    padding-left: 10px;
+    padding-right: 10px;
+}
 </style>
 {% endblock %}
 
 
 {% block content %}
 
-<div class="p-2 mb-3">
+<div class="p-2 mb-3 header-links-sorting">
     <p>
-        <a href="?">BY NAME</a> |
-        <a href="?year">BY INDUCTED YEAR</a>
+        <a href="?">By Name</a> |
+        <a href="?year">By Year Inducted</a>
     </p>
 </div>
 
