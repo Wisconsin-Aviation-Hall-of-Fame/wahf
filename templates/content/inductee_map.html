@@ -3,6 +3,32 @@
 {% load placeholder_tags %}
 
 
+
+{% block title %}Wisconsin Aviation Hall of Fame Inductees - Map{% endblock %}
+
+
+{% block ogtitle %}
+<meta property="og:title" content="Wisconsin Aviation Hall of Fame Inductees - Map" >
+{% endblock %}
+
+{% block ogdescription %}
+<meta property="og:description" content="View all Wisconsin Aviation Hall of Fame inductees on a 1968 Wisconsin VFR sectional.">
+{% endblock %}
+
+{% block metadescription %}
+<meta name="description" content="View all Wisconsin Aviation Hall of Fame inductees on a 1968 Wisconsin VFR sectional." />
+{% endblock %}
+
+{% block ogimage %}
+<meta property="og:image" content="http://www.wahf.org/static/map-og-image.jpg" >
+{% endblock %}
+
+{% block page_title %}
+    {% with page_title="Inductees Map" %}
+        {{ block.super }}
+    {% endwith %}
+{% endblock %}
+
 {% block extra_css %}
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
               crossorigin=""/>
@@ -24,6 +50,16 @@
                     object-fit: cover; /* Ensures photos fill the tile square */
                     background: #ccc;
                 }
+
+            .page-title-container {
+                margin-bottom: 0px;
+                padding-top: 4px;
+                padding-bottom: 0px;
+            }
+
+            .header-links-sorting {
+                text-transform: uppercase;
+            }
         </style>
 
 {% endblock %}
@@ -44,7 +80,7 @@
     });
 
     // Overlay layers (TMS)
-    var lyr = L.tileLayer('https://maptiles.wahf.org/tiles/1968/{z}/{x}/{y}.png', {tms: 1, opacity: 0.8, attribution: "1967 AeroChart", minZoom: 5, maxZoom: 12});
+    var lyr = L.tileLayer('https://maptiles.wahf.org/tiles/1968/{z}/{x}/{y}.png', {tms: 1, opacity: 0.95, attribution: "1967 AeroChart", minZoom: 5, maxZoom: 12});
 
     // Map Initialization
     var map = L.map('map', {
@@ -204,6 +240,11 @@
 
 
 {% block content %}
+
+        <div class="p-1 mb-3 header-links-sorting">
+                <a href="/hall-of-fame/">By Name</a> |
+                <a href="/hall-of-fame/?year">By Year Inducted</a>
+        </div>
 
     </div>
 </div>

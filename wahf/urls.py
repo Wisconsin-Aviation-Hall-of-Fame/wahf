@@ -56,7 +56,7 @@ urlpatterns = [
         name="article_stories_that_soared",
     ),
     path(
-        "hall-of-fame/inductee-map",
+        "hall-of-fame/inductees-map",
         content_views.inductee_map_view,
         name="inductees_map",
     ),
