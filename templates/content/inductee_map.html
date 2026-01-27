@@ -89,7 +89,7 @@
     // This defines how "close" markers must be to be grouped.
     // 0.1 is roughly 6-7 miles at this latitude.
     // Increase this if you still see overlaps between different groups.
-    const PROXIMITY_THRESHOLD = 0.62;
+    const PROXIMITY_THRESHOLD = 0.42;
     const groupedLocations = {};
 
     photoLocations.forEach(data => {
@@ -106,7 +106,7 @@
 
     // --- 2. GRID LAYOUT CALCULATION ---
     // This matches the visual size of the icons to the geographical spacing
-    const GRID_SPACING = 0.11;
+    const GRID_SPACING = 0.09;
 
     Object.values(groupedLocations).forEach(group => {
         const count = group.length;
