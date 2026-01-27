@@ -63,7 +63,7 @@
         { maxZoom: 9, size: 75 },
         { maxZoom: 10, size: 95 },
         { maxZoom: 10, size: 120 },
-        { maxZoom: 12, size: 135 }
+        { maxZoom: 12, size: 145 }
     ];
 
     // Function to Calculate Icon Size Based on Current Zoom ---
@@ -110,7 +110,7 @@
 
     // JITTER_FACTOR: 0.2 means the marker can drift up to 20% of the grid space
     // Increase this to 0.4 or 0.5 if you want it to look much messier/natural
-    const JITTER_FACTOR = 0.25;
+    const JITTER_FACTOR = 0.32;
 
     Object.values(groupedLocations).forEach(group => {
         const count = group.length;
