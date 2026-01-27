@@ -25,7 +25,7 @@ urlpatterns = [
     # path("documents/", include(wagtaildocs_urls)),
     # WAGTAIL DOCUMENT VIEWER WITH DOWNLOAD LOGGING
     path(
-        f"{document_url_slug}/<int:document_id>/<str:document_filename>",
+        "documents/<int:document_id>/<str:document_filename>",
         log_document_download_and_serve,
         name="wagtaildocs_serve",
     ),
