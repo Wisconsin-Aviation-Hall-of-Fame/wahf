@@ -469,6 +469,7 @@ class InducteeListPage(OpenGraphMixin, Page):
 
     subpage_types = [
         "content.InducteeDetailPage",
+        "content.FreeformPage",
     ]
 
     parent_page_type = [
