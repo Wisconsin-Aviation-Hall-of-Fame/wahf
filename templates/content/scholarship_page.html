@@ -3,20 +3,30 @@
 {% load image_tags %}
 {% load placeholder_tags %}
 
-{% block content %}
 
+{% block extra_css %}
 <style type="text/css">
 .top-images, .bottom-images {
     border-bottom: 1px solid #cecece;
-    background: #0a58ca;
+    background: black;
     overflow: hidden;
-    height: 56px;
+    height: 64px;
+    text-align: center;
+    padding: 4px 0 4px 0;
+}
+
+h1 {
+    margin-top: 20px;
 }
 
 h3 {
     text-transform: uppercase;
     color: #7e7e7e;
     font-size: 1.1rem;
+}
+
+h4 {
+    margin-bottom: 35px;
 }
 
 .block-paragraph {
@@ -38,21 +48,39 @@ h3 {
     border: 1px solid #cecece;
 }
 </style>
+{% endblock %}
 
-<div class="top-images mt-0 mb-2">
-    {% for img in top_images %}
-    {% image img height-55 class="img-fluid pr-1" %}
-    {% endfor %}
-</div>
+
+{% block page_title %}
+{% endblock %}
+
+{% block before_title %}
+    <div class="top-images mt-0 mb-2">
+        {% for img in top_images %}
+        {% image img height-55 class="pr-1" loading="lazy" %}
+        {% endfor %}
+    </div>
+{% endblock %}
+
+
+{% block content %}
+
+<h1>{{ page.title }}</h1>
 
 {{ page.body }}
+
+    </div>
+</div>
 
 
 <div class="bottom-images my-5">
     {% for img in bottom_images %}
-    {% image img height-55 class="img-fluid pr-1" %}
+    {% image img height-55 class="pr-1" loading="lazy" %}
     {% endfor %}
 </div>
+
+<div class="container">
+    <div class="content">
 
 <h2>WAHF Scholarship Recipients</h2>
 
@@ -69,7 +97,7 @@ h3 {
                 {{ scholarship.blurb|safe }}
             </div>
             <div class="col-md-auto">
-                {% image scholarship.image height-225 class="img-fluid p-1" %}
+                {% image scholarship.image height-225 class="img-fluid p-1" loading="lazy" %}
             </div>
         </div>
     </div>
