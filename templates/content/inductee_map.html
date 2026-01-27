@@ -89,24 +89,34 @@
         groupedLocations[key].push(data);
     });
 
-    const JITTER_RADIUS_DEG = 0.05; // Adjust this value (in degrees) for separation distance
+    // Adjust this value to control how far apart the "tiles" are.
+    // Since your map zoom is 6-12, 0.1 to 0.15 is usually a good range.
+    const GRID_SPACING = 0.12;
 
     Object.values(groupedLocations).forEach(group => {
         const count = group.length;
-        const totalAngle = 2 * Math.PI; // 360 degrees in radians
+
+        // Calculate grid dimensions (e.g., 30 markers becomes a 6x5 grid)
+        const columns = Math.ceil(Math.sqrt(count));
+        const rows = Math.ceil(count / columns);
 
         group.forEach((data, index) => {
             let finalLat = data.lat;
             let finalLon = data.lon;
 
-            // Only apply jitter if there are 2 or more markers
             if (count > 1) {
-                // Calculate the angle for this marker
-                const angle = totalAngle * (index / count);
+                // Determine position in the grid
+                const row = Math.floor(index / columns);
+                const col = index % columns;
 
-                // Calculate new coordinates using trigonometry
-                finalLat = data.lat + JITTER_RADIUS_DEG * Math.cos(angle);
-                finalLon = data.lon + JITTER_RADIUS_DEG * Math.sin(angle);
+                // Offset the markers so the "center" of the grid stays
+                // near the original coordinate.
+                const latOffset = (row - (rows - 1) / 2) * GRID_SPACING;
+                const lonOffset = (col - (columns - 1) / 2) * GRID_SPACING;
+
+                // Note: Subtracting from Lat moves it "down" the map for higher row indexes
+                finalLat = data.lat - latOffset;
+                finalLon = data.lon + lonOffset;
             }
 
             const initialSize = getIconSize(map.getZoom());
@@ -130,14 +140,13 @@
                 </div>
             `;
 
-            // Use the calculated coordinates
             const marker = L.marker([finalLat, finalLon], {icon: photoIcon})
                 .addTo(map)
                 .bindPopup(popupContent, {
                     maxWidth: 350
                 });
 
-            markers.push(marker); // Store the marker reference
+            markers.push(marker);
         });
     });
 
