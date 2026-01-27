@@ -16,6 +16,14 @@
             .photo-popup-content p { margin: 5px 0 0 0; font-style: italic; color: #555; }
             .photo-popup-content p, .photo-popup-content small { font-size: larger; }
             .photo-popup-content img { cursor: pointer; }
+
+            .photo-icon {
+                    border: 2px solid white;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                    object-fit: cover; /* Ensures photos fill the tile square */
+                    background: #ccc;
+                }
         </style>
 
 {% endblock %}
@@ -74,53 +82,56 @@
     }
 
 
-    // Array to hold references to all marker objects
     const markers = [];
+    const photoLocations = {{ inductee_json|safe }};
 
-    // Object to track all markers at a given location (lat,lon)
+    // --- 1. PROXIMITY GROUPING ---
+    // This defines how "close" markers must be to be grouped.
+    // 0.1 is roughly 6-7 miles at this latitude.
+    // Increase this if you still see overlaps between different groups.
+    const PROXIMITY_THRESHOLD = 0.15;
     const groupedLocations = {};
 
-    const photoLocations = {{ inductee_json|safe }};
     photoLocations.forEach(data => {
-        const key = `${data.lat.toFixed(5)},${data.lon.toFixed(5)}`;
+        // We "bin" the coordinates by rounding them to the nearest threshold
+        const latBin = Math.round(data.lat / PROXIMITY_THRESHOLD) * PROXIMITY_THRESHOLD;
+        const lonBin = Math.round(data.lon / PROXIMITY_THRESHOLD) * PROXIMITY_THRESHOLD;
+        const key = `${latBin.toFixed(2)},${lonBin.toFixed(2)}`;
+
         if (!groupedLocations[key]) {
             groupedLocations[key] = [];
         }
         groupedLocations[key].push(data);
     });
 
-    // Adjust this value to control how far apart the "tiles" are.
-    // Since your map zoom is 6-12, 0.1 to 0.15 is usually a good range.
-    const GRID_SPACING = 0.12;
+    // --- 2. GRID LAYOUT CALCULATION ---
+    // This matches the visual size of the icons to the geographical spacing
+    const GRID_SPACING = 0.11;
 
     Object.values(groupedLocations).forEach(group => {
         const count = group.length;
 
-        // Calculate grid dimensions (e.g., 30 markers becomes a 6x5 grid)
+        // Calculate a square-ish grid (e.g., 30 items -> 6 cols x 5 rows)
         const columns = Math.ceil(Math.sqrt(count));
         const rows = Math.ceil(count / columns);
 
+        // Calculate the center of the group to keep the grid balanced
+        const avgLat = group.reduce((sum, d) => sum + d.lat, 0) / count;
+        const avgLon = group.reduce((sum, d) => sum + d.lon, 0) / count;
+
         group.forEach((data, index) => {
-            let finalLat = data.lat;
-            let finalLon = data.lon;
+            const row = Math.floor(index / columns);
+            const col = index % columns;
 
-            if (count > 1) {
-                // Determine position in the grid
-                const row = Math.floor(index / columns);
-                const col = index % columns;
+            // Offset markers from the group's average center
+            // We subtract half the total grid width/height to keep it centered
+            const latOffset = (row - (rows - 1) / 2) * GRID_SPACING;
+            const lonOffset = (col - (columns - 1) / 2) * GRID_SPACING;
 
-                // Offset the markers so the "center" of the grid stays
-                // near the original coordinate.
-                const latOffset = (row - (rows - 1) / 2) * GRID_SPACING;
-                const lonOffset = (col - (columns - 1) / 2) * GRID_SPACING;
-
-                // Note: Subtracting from Lat moves it "down" the map for higher row indexes
-                finalLat = data.lat - latOffset;
-                finalLon = data.lon + lonOffset;
-            }
+            const finalLat = avgLat - latOffset;
+            const finalLon = avgLon + lonOffset;
 
             const initialSize = getIconSize(map.getZoom());
-
             const photoIcon = L.icon({
                 iconUrl: data.image,
                 iconSize: initialSize.size,
@@ -142,9 +153,7 @@
 
             const marker = L.marker([finalLat, finalLon], {icon: photoIcon})
                 .addTo(map)
-                .bindPopup(popupContent, {
-                    maxWidth: 350
-                });
+                .bindPopup(popupContent, { maxWidth: 350 });
 
             markers.push(marker);
         });
