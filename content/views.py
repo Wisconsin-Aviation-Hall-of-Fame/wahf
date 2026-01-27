@@ -163,7 +163,11 @@ def inductee_map_view(request):
     locations_qs = LocationTag.objects.filter(
         latitude__isnull=False,
         longitude__isnull=False,
-    ).prefetch_related("tagged_locations")
+    ).prefetch_related("tagged_locations__content_object")
+
+    inductee_data = {}
+    for inductee in InducteeDetailPage.objects.select_related("page_ptr", "photo"):
+        inductee_data[inductee.pk] = inductee
 
     data = []
     tagged_uniques = []  # prevent duplicate inductee and map points
@@ -172,8 +176,14 @@ def inductee_map_view(request):
     for location in locations_qs.all():
         for tagged_location in location.tagged_locations.all():
             inductee = tagged_location.content_object
+            inductee_fields = inductee_data.get(inductee.pk)
             unique = f"{location.pk}x{inductee.pk}"
-            if unique not in tagged_uniques and inductee.photo and inductee.name:
+            if (
+                unique not in tagged_uniques
+                and inductee_fields
+                and inductee_fields.photo
+                and inductee.name
+            ):
                 tagged_uniques.append(unique)
 
                 data.append(
@@ -183,8 +193,13 @@ def inductee_map_view(request):
                         "location": location.location_name,
                         "name": inductee.name,
                         "tagline": inductee.tagline,
-                        "link": inductee.url,
-                        "image": inductee.photo.get_rendition("fill-100x100").url,
+                        "link": inductee_fields.url,
+                        "image": inductee_fields.photo.get_rendition(
+                            "fill-100x100"
+                        ).url,
+                        "image_large": inductee_fields.photo.get_rendition(
+                            "fill-350x350"
+                        ).url,
                     }
                 )
 

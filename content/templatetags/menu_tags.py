@@ -17,12 +17,16 @@ def get_site_root(context):
 
 @register.simple_tag()
 def get_menu(slug):
-    return Menu.objects.filter(slug=slug).first()
+    return (
+        Menu.objects.filter(slug=slug).prefetch_related("menu_items__link_page").first()
+    )
 
 
 @register.inclusion_tag("tags/main_menu.html", takes_context=True)
 def get_main_menu(context, slug, parent, calling_page=None):
-    menu = Menu.objects.filter(slug=slug).first()
+    menu = (
+        Menu.objects.filter(slug=slug).prefetch_related("menu_items__link_page").first()
+    )
     menu_items = []
 
     if menu:
@@ -39,7 +43,9 @@ def get_main_menu(context, slug, parent, calling_page=None):
 
 @register.inclusion_tag("tags/footer_menu.html", takes_context=True)
 def get_footer_menu(context, slug, parent, calling_page=None):
-    menu = Menu.objects.filter(slug=slug).first()
+    menu = (
+        Menu.objects.filter(slug=slug).prefetch_related("menu_items__link_page").first()
+    )
     menu_items = []
 
     if menu:
