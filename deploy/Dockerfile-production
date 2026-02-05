@@ -23,6 +23,10 @@ COPY . .
 COPY deploy/requirements/production.txt /
 RUN pip install --no-cache-dir -r /production.txt
 
+# For link harvesting preview stuff
+RUN pip install playwright
+RUN playwright install chromium
+RUN playwright install-deps chromium
 
 # RUN python manage.py collectstatic --noinput --clear
 

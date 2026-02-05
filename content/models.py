@@ -551,23 +551,14 @@ class InducteeDetailPage(OpenGraphMixin, Page):
         blank=True,
     )
 
-    content_panels = Page.content_panels + [
+    # Wagtail Panels
+    detail_panels = Page.content_panels + [
         FieldPanel("first_name"),
         FieldPanel("last_name"),
         FieldPanel("name"),
         FieldPanel("tagline"),
         FieldPanel("tags"),
         FieldPanel("body"),
-        MultiFieldPanel(
-            [
-                FieldPanel(
-                    "photo",
-                    help_text="Hot top: don't set this when creating a new Inductee page, it will automatically copy their image from their Person profile. Main photo for Inductee page. Used for social media sharing and the image at the top of the page.",
-                ),
-                FieldPanel("gallery"),
-            ],
-            heading="Photos",
-        ),
         MultiFieldPanel(
             [
                 FieldPanel("inducted_date"),
@@ -578,6 +569,29 @@ class InducteeDetailPage(OpenGraphMixin, Page):
             heading="Dates",
         ),
     ]
+
+    photo_gallery_panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel(
+                    "photo",
+                ),
+                FieldPanel("gallery"),
+            ],
+            heading="Photos",
+        ),
+    ]
+
+    link_panels = [InlinePanel("sections", label="Link Sections")]
+
+    edit_handler = TabbedInterface(
+        [
+            ObjectList(detail_panels, heading="Inductee Details"),
+            ObjectList(photo_gallery_panels, heading="Photo Gallery"),
+            ObjectList(link_panels, heading="Outbound Links"),
+            ObjectList(OpenGraphMixin.promote_panels, heading="Promote"),
+        ]
+    )
 
     parent_page_type = [
         "content.InducteeListPage",
@@ -593,6 +607,14 @@ class InducteeDetailPage(OpenGraphMixin, Page):
         elif self.photo:
             return self.photo
         return None
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+
+        sections = self.sections.prefetch_related("links").all()
+        context["link_sections"] = sections
+
+        return context
 
 
 @register_snippet
@@ -614,6 +636,58 @@ class InducteePhotoPlaceholder(models.Model):
 
     def __str__(self):
         return "Inductee Missing Photo Placeholder Image"
+
+
+class InducteeOutboundLink(Orderable):
+    section = ParentalKey("InducteeOutboundLinkSection", related_name="links")
+    url = models.URLField()
+    domain = models.CharField(max_length=70, null=True, blank=True)
+
+    title = models.CharField(max_length=250, blank=True, null=True)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to="link-images/", blank=True, null=True)
+
+    created_datetime = models.DateTimeField(auto_now_add=True)
+    downloaded_datetime = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    panels = [
+        FieldPanel("url"),
+    ]
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["section", "url"], name="unique_page_url_link"
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        url_pre_save = None
+        if self.pk:
+            link_obj_pre_save = InducteeOutboundLink.objects.filter(pk=self.pk).first()
+            if link_obj_pre_save:
+                url_pre_save = link_obj_pre_save.url
+
+        if self.url and url_pre_save and self.url != url_pre_save:
+            self.domain = ""
+            self.title = ""
+            self.description = ""
+            self.image = None  # deleted ones could be cleaned up?
+            self.downloaded_datetime = None
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        if self.title:
+            return f"{self.title} - {self.url}"
+        return self.url
+
+
+class InducteeOutboundLinkSection(Orderable, ClusterableModel):
+    page = ParentalKey("InducteeDetailPage", related_name="sections")
+    title = models.CharField(max_length=250, help_text="Section Heading", blank=True)
+
+    panels = [FieldPanel("title"), InlinePanel("links", label="Link", min_num=1)]
 
 
 class FreeformPage(OpenGraphMixin, Page):

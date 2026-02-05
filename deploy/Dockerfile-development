@@ -21,6 +21,11 @@ RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-r
 COPY deploy/requirements/*.txt /
 RUN pip install -r /development.txt
 
+# For link harvesting preview stuff
+RUN pip install playwright
+RUN playwright install chromium
+RUN playwright install-deps chromium
+
 # Use /app folder as a directory where the source code is stored.
 WORKDIR $APP_HOME
 

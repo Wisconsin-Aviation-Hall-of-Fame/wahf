@@ -52,6 +52,43 @@ blockquote {
   font-size: larger;
 }
 
+.link-container {
+    border: 2px solid #0e0e0e;
+}
+
+.link-container a {
+    text-decoration: none;
+    color: black;
+}
+
+.link-domain {
+    text-transform: uppercase;
+}
+
+.inductee-detail-list-header {
+    font-family: "Lora", serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-top: 0;
+    margin-bottom: .5rem;
+    line-height: 1.2;
+    color: var(--bs-heading-color);
+}
+
+.link-title {
+    font-family: "Lora", serif;
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin-top: 0;
+    margin-bottom: .5rem;
+    line-height: 1.2;
+    color: var(--bs-heading-color);
+}
+
+.link-image {
+
+}
+
 
 </style>
 {% endblock %}
@@ -123,10 +160,12 @@ blockquote {
 
     </div>
 
+    <div style="clear:both"></div>
+
     {% if page.tags.all %}
     <div class="row mt-5 mb-3">
         <div class="col">
-            <p class="related-heading">
+            <p class="inductee-detail-list-header">
                 See Also:
             </p>
 
@@ -139,6 +178,45 @@ blockquote {
         </div>
     </div>
     {% endif %}
+
+
+    {% for section in link_sections %}
+    <div class="row mt-5 mb-3">
+        <div class="col">
+            <p class="inductee-detail-list-header">
+                {% if section.title %}{{ section.title }}:{% else %}Read More:{% endif %}
+            </p>
+
+            <div class="links container">
+                <div class="row">
+                {% for link in section.links.all %}
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                        <div class="link-container m-1">
+                            <a href="{{ link.url }}" target="_blank" title="{{ link.title|default:page.title }}">
+                                {% if link.image %}
+                                <img src="{{ link.image.url }}" alt="{{ link.title|default:page.title }}" class="img-fluid link-image" loading="lazy">
+                                {% endif %}
+
+                                <div class="p-2">
+                                    <p class="link-title">{{ link.title|default:page.title }}</p>
+
+                                    {% if link.description %}
+                                    <p class="link-description">{{ link.description }}</p>
+                                    {% endif %}
+
+                                    <span class="read-more">
+                                        <i data-feather="arrow-right-circle"></i> Read At <span class="link-domain">{{ link.domain }}</span>
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 
     <!--
     <div class="row mt-5 mb-3">
