@@ -4,6 +4,7 @@ import shutil
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db.utils import IntegrityError
 from PIL import Image
 
 from magazine.models import MagazineIssuePage, MagazinePage
@@ -52,21 +53,32 @@ class Command(BaseCommand):
                     .replace(".jpg", "")
                 )
 
-                mp = MagazinePage.objects.create(
-                    issue=mag, page=pagenum, text=text_by_page[pagenum - 1]
-                )
-
-                # Resize images, create thumbnails
-                with Image.open(filename) as im:
-                    im_thumb = im.thumbnail((125, 125))
-                    im_thumb.save(
-                        f"{settings.MAGAZINE_ROOT}/{mp.get_thumbnail_filename}"
+                try:
+                    mp = MagazinePage.objects.create(
+                        issue=mag, page=pagenum, text=text_by_page[pagenum - 1]
                     )
+                except IntegrityError:
+                    print(f"skip page {pagenum} - {filename}")
+                    pass
+                else:
+                    # Resize images, create thumbnails
+                    with Image.open(filename) as im:
+                        im_thumb = im.copy()
+                        im_thumb.thumbnail((125, 125))
+                        im_thumb.save(
+                            f"{settings.MAGAZINE_ROOT}/{mp.get_thumbnail_filename}"
+                        )
 
-                    im_small = im.thumbnail((200, 200))
-                    im_small.save(f"{settings.MAGAZINE_ROOT}/{mp.get_small_filename}")
+                        im_small = im.copy()
+                        im_small.thumbnail((200, 200))
+                        im_small.save(
+                            f"{settings.MAGAZINE_ROOT}/{mp.get_small_filename}"
+                        )
 
-                    im_medium = im.thumbnail((600, 600))
-                    im_medium.save(f"{settings.MAGAZINE_ROOT}/{mp.get_medium_filename}")
+                        im_medium = im.copy()
+                        im_medium.thumbnail((600, 600))
+                        im_medium.save(
+                            f"{settings.MAGAZINE_ROOT}/{mp.get_medium_filename}"
+                        )
 
-                print(f"{mag} - page {pagenum}")
+                    print(f"{mag} - page {pagenum}")

@@ -1,40 +1,215 @@
 {% extends "base.html" %}
 {% load static wagtailcore_tags wagtailimages_tags %}
 
+
+{% block extra_css %}
+<style type="text/css">
+
+.page-title-container {
+    padding: 5px 0 0 0;
+    margin: 5px 0 0 0;
+}
+
+.wide-container {
+    max-width: auto;
+}
+
+.issue-container {
+    position: relative; /* Establish a coordinate system for the buttons */
+    width: 100%;
+    height: auto;
+    background: black;
+}
+
+.issue-browser {
+    display: flex;               /* Align items in a row */
+    overflow-x: auto;            /* Enable horizontal scrolling */
+    scroll-snap-type: x mandatory; /* Makes images 'snap' into place */
+    gap: 15px;                   /* Space between photos */
+    padding: 15px;
+    webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.issue-browser::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari */
+}
+
+.issue-browser img.issue-page {
+    flex: 0 0 auto;
+    height: 95vh;
+    object-fit: cover;           /* Keeps aspect ratio clean */
+    scroll-snap-align: center;   /* Snaps to the center of the screen */
+    border-radius: 8px;
+}
+
+.nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%); /* Perfectly center vertically */
+    z-index: 10; /* Sit on top of images */
+
+    /* Styling the "Floating" look */
+    background: rgba(255, 255, 255, 0.3);
+    color: black;
+    font-size: larger;
+    border: none;
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(5px); /* Modern frosted glass effect */
+    transition: background 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.prev { left: 20px; }
+.next { right: 20px; }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+
+const baseMagazineUrl = "{{ page.url }}";
+let pageNum = {{ current_pagenum }};
+let lastPageNum = {{ page.pages.last.page }};
+
+function scrollGallery(direction) {
+  const gallery = document.getElementById('issue_browser');
+  const scrollAmount = document.getElementById("page1").width + 15; // Image width + gap (approx)
+
+  gallery.scrollBy({
+    left: direction * scrollAmount,
+    behavior: 'smooth' // Smooth sliding animation
+  });
+
+  pageNum += direction;
+  if (pageNum < 1) { pageNum = 1; }
+  if (pageNum > lastPageNum ) { pageNum = lastPageNum; }
+
+  let newPath = baseMagazineUrl + "page-" + pageNum;
+  history.pushState(null, null, newPath);
+
+  updateAccessibilityStatus(pageNum, lastPageNum);
+}
+
+window.addEventListener('load', () => {
+    const target = document.getElementById("page" + pageNum);
+    if (target) {
+       setTimeout(() => {
+         target.scrollIntoView({ inline: 'start', block: 'nearest' });
+       }, 50);
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+  // Only trigger if the user isn't typing in an input or textarea
+  if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+    if (e.key === 'ArrowRight') {
+      scrollGallery(1);
+    } else if (e.key === 'ArrowLeft') {
+      scrollGallery(-1);
+    }
+  }
+});
+
+const gallery = document.getElementById('issue_container');
+
+gallery.addEventListener('click', (e) => {
+  const rect = gallery.getBoundingClientRect();
+  const x = e.clientX - rect.left; // Get click position relative to container
+  const width = rect.width;
+
+  if (x > width * 0.7) {
+    scrollGallery(1);
+  } else if (x < width * 0.3) {
+    scrollGallery(-1);
+  }
+});
+
+function updateAccessibilityStatus(index, total) {
+  const status = document.getElementById('gallery-status');
+  status.textContent = `Displaying page ${index} of ${total}`;
+}
+
+</script>
+{% endblock %}
+
+
 {% block content %}
-
-
-<div class="my-2">
+<!--
+<div class="m-0">
     <a href="{% slugurl page.get_parent.slug %}">Back to All Issues</a>
 </div>
+-->
 
-{% if page.volume_number and page.issue_number %}
-<span class="badge text-bg-secondary">
-    Volume {{ page.volume_number }}, Issue {{ page.issue_number }}
-</span>
-{% endif %}
+<div class="pb-3">
+    {% if page.volume_number and page.issue_number %}
+    <span class="badge text-bg-primary">
+        Volume {{ page.volume_number }}, Issue {{ page.issue_number }}
+    </span>
+    {% endif %}
+
+    {% if page.download_pdf %}
+    <a target="_blank" href="{{ page.download_pdf.url }}">
+        <span class="badge text-bg-secondary ml-3">
+            🗞️ Download Issue (PDF)
+        </span>
+    </a>
+    {% endif %}
+</div>
 
 
-<div class="container">
-    <div class="row">
-        <div class="col-md text-center">
-            <p>
-                <a target="_blank" href="{{ page.download_pdf.url }}">
-                    {% image page.cover height-300 class="img-thumbnail img-fluid" %}
-                    <br>
-                    <a target="_blank" href="{{ page.download_pdf.url }}">Read Issue (PDF)</a>
-                </a>
-            </p>
-        </div>
-        <div class="col-md">
-            <h4>In This Issue:</h4>
-            <p class="lead">
-                {{ page.blurb|safe }}
-            </p>
-        </div>
+    </div> <!-- content -->
+</div> <!-- container -->
+
+
+<button class="nav-btn prev" onclick="scrollGallery(-1)" aria-label="Previous magazine page" aria-controls="magazine-gallery">
+    <span aria-hidden="true">
+        &#10094;
+    </span>
+</button>
+<button class="nav-btn next" onclick="scrollGallery(1)" aria-label="Next magazine page" aria-controls="magazine-gallery">
+    <span aria-hidden="true">
+        &#10095;
+    </span>
+</button>
+
+<div class="issue-container" id="issue_container">
+    <div class="issue-browser" id="issue_browser" role="region" aria-live="polite" aria-label="Magazine pages" tabindex="0">
+        {% for issue_page in page.pages.all %}
+            <div role="group" aria-roledescription="slide" aria-label="Page {{ issue_page.page }} of {{ forloop.length }}">
+                <img src="{{ issue_page.get_original_url }}" alt="{{page.title}} -  Page{{ issue_page.page }}" class="issue-page" loading="eager" id="page{{ issue_page.page }}">
+                <div class="visually-hidden">
+                    <p>{{ issue_page.text }}</p>
+                </div>
+
+            </div>
+        {% endfor %}
     </div>
 </div>
 
+<div id="gallery-status" class="visually-hidden" aria-live="polite"></div>
+
+
+<div class="container">
+    <div class="content">
 
 
 

@@ -1,9 +1,11 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 from wagtail.fields import RichTextField
 from wagtail.models import Page
+from wagtail.url_routing import RouteResult
 
 from wahf.mixins import OpenGraphMixin
 
@@ -56,6 +58,38 @@ class MagazineIssuePage(OpenGraphMixin, Page):
             title += f" - Volume {self.volume_number}, Issue {self.issue_number}"
         return title
 
+    def route(self, request, path_components):
+        if not path_components:
+            # This is the base URL: /url/magazine-issue/
+            return super().route(request, path_components)
+
+        # Check if the sub-path looks like "page-2"
+        if len(path_components) == 1 and path_components[0].startswith("page-"):
+            # It's a valid sub-path, so we return 'self' (this page)
+            return RouteResult(self)
+
+        # If it doesn't match our pattern, 404
+        return super().route(request, path_components)
+
+    def get_context(self, request):
+        context = super().get_context(request)
+        # Extract the page number from the URL to use in the template if needed
+        path_bits = [bit for bit in request.path.split("/") if bit]
+        last_bit = path_bits[-1]
+        pagenum_str = last_bit if "page-" in last_bit else "page-1"
+        pagenum_chunk_str = pagenum_str.split("-", 1)[1]
+
+        try:
+            current_pagenum = int(pagenum_chunk_str)
+        except ValueError:
+            current_pagenum = 1
+
+        if not self.pages.filter(page=current_pagenum).exists():
+            current_pagenum = 1
+
+        context["current_pagenum"] = current_pagenum
+        return context
+
     content_panels = Page.content_panels + [
         MultiFieldPanel(
             [
@@ -97,8 +131,7 @@ class MagazineListPage(OpenGraphMixin, Page):
         context = super().get_context(request, *args, **kwargs)
 
         context["magazine_list"] = (
-            MagazineIssuePage.objects.child_of(self)
-            .live()
+            MagazineIssuePage.objects.live()  # .child_of(self)
             .order_by("-date")
             .select_related("cover", "page_ptr")
         )
@@ -129,14 +162,19 @@ class MagazineListPage(OpenGraphMixin, Page):
 
 
 class MagazinePage(models.Model):
-    issue = models.ForeignKey("magazine.MagazineIssuePage", on_delete=models.CASCADE)
+    issue = models.ForeignKey(
+        "magazine.MagazineIssuePage", on_delete=models.CASCADE, related_name="pages"
+    )
     page = models.PositiveIntegerField(db_index=True)
     text = models.TextField(blank=True)
     guid = models.UUIDField(default=uuid.uuid4)
 
     def get_filename(self, prefix):
         # 123/L2-<guid>.jpg
-        return f"{self.issue.pk}/{prefix}{self.page}-{self.guid}.jpg"
+        if prefix == "L":
+            return f"{self.issue.pk}/{prefix}-{self.page:0>2}.jpg"
+        else:
+            return f"{self.issue.pk}/{prefix}{self.page}-{self.guid}.jpg"
 
     @property
     def get_thumbnail_filename(self):
@@ -153,6 +191,26 @@ class MagazinePage(models.Model):
     @property
     def get_original_filename(self):
         return self.get_filename("L")
+
+    @property
+    def get_base_url(self):
+        return f"{settings.MEDIA_URL}magazines/"
+
+    @property
+    def get_thumbnail_url(self):
+        return f"{self.get_base_url}{self.get_thumbnail_filename}"
+
+    @property
+    def get_small_url(self):
+        return f"{self.get_base_url}{self.get_small_filename}"
+
+    @property
+    def get_medium_url(self):
+        return f"{self.get_base_url}{self.get_medium_filename}"
+
+    @property
+    def get_original_url(self):
+        return f"{self.get_base_url}{self.get_original_filename}"
 
     def __str__(self):
         return f"{self.issue} - page {self.page}"
