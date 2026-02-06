@@ -660,6 +660,7 @@ class InducteeOutboundLink(Orderable):
                 fields=["section", "url"], name="unique_page_url_link"
             )
         ]
+        ordering = ["sort_order"]
 
     def save(self, *args, **kwargs):
         url_pre_save = None
@@ -688,6 +689,9 @@ class InducteeOutboundLinkSection(Orderable, ClusterableModel):
     title = models.CharField(max_length=250, help_text="Section Heading", blank=True)
 
     panels = [FieldPanel("title"), InlinePanel("links", label="Link", min_num=1)]
+
+    class Meta:
+        ordering = ["sort_order"]
 
 
 class FreeformPage(OpenGraphMixin, Page):
