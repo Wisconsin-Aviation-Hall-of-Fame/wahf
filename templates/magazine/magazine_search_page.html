@@ -66,11 +66,21 @@
             </ul>
         </div>
         <div class="col-6">
-            {% for snippet in issue.matching_snippets %}
-            <a href="{{ snippet.get_page_link }}">
-                <img src="{{ snippet.get_small_url }}" alt="{{ snippet.issue }} - Page {{ snippet.page }}" loading="lazy">
-            </a>
-            {% endfor %}
+
+            {% with first_page=issue.pages.first %}
+                <a href="{{ first_page.get_page_link }}">
+                    <img src="{{ first_page.get_small_url }}" alt="{{ issue }} - Page 1" loading="lazy">
+                </a>
+
+                {% for snippet in issue.matching_snippets %}
+                    {% if snippet != first_page %}
+                        <a href="{{ snippet.get_page_link }}">
+                            <img src="{{ snippet.get_small_url }}" alt="{{ snippet.issue }} - Page {{ snippet.page }}" loading="lazy">
+                        </a>
+                    {% endif %}
+                {% endfor %}
+
+            {% endwith %}
         </div>
     </div>
     {% endfor %}

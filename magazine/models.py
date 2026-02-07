@@ -2,7 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
-from django.contrib.postgres.search import SearchHeadline, SearchQuery
+from django.contrib.postgres.search import SearchHeadline, SearchQuery, SearchVector
 from django.db import models
 from django.db.models import Prefetch
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
@@ -235,6 +235,9 @@ class MagazinePage(models.Model):
             GinIndex(
                 fields=["text"], name="magazine_page_text", opclasses=["gin_trgm_ops"]
             ),
+            GinIndex(
+                SearchVector("text", config="english"), name="mg_page_search_vector_idx"
+            ),
         ]
 
 
@@ -250,7 +253,7 @@ class MagazineSearchPage(Page):
             query_text = form.cleaned_data["query"]
             context["query"] = query_text
 
-            query = SearchQuery(query_text)
+            query = SearchQuery(query_text, config="english")
 
             # 1. Create a queryset for the children (the snippets)
             snippet_qs = MagazinePage.objects.annotate(
@@ -262,11 +265,6 @@ class MagazineSearchPage(Page):
                 )
             ).filter(text__search=query)
 
-            # Include cover page
-            cover_qs = MagazinePage.objects.filter(
-                issue__in=snippet_qs.values("issue").distinct(), page=1
-            )
-
             # 2. Query the Parents (Issues), prefetching only matching children
             # We filter the parent to only those that HAVE matching children
             search_results = (
@@ -275,7 +273,7 @@ class MagazineSearchPage(Page):
                 .prefetch_related(
                     Prefetch(
                         "pages",
-                        queryset=snippet_qs | cover_qs,
+                        queryset=snippet_qs,
                         to_attr="matching_snippets",
                     )
                 )
