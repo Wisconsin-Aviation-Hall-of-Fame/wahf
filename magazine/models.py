@@ -210,6 +210,12 @@ class MagazinePage(models.Model):
     ai_story_summary = models.TextField(blank=True, null=True)
     ai_data = models.JSONField(default=dict)
 
+    @property
+    def has_ai_data(self):
+        if self.ai_page_title or self.ai_story_title or self.ai_story_author:
+            return True
+        return False
+
     def get_filename(self, prefix):
         # 123/L2-<guid>.jpg
         if prefix in ["L", "OG"]:

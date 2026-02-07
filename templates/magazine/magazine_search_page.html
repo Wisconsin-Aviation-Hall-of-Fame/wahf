@@ -16,7 +16,15 @@
 }
 
 .page-row li {
-    margin-bottom: 6px;
+    margin-bottom: 10px;
+}
+
+.page-row li p {
+    font-weight: bold;
+}
+
+.page-row li p a {
+    font-weight: normal;
 }
 
 .search-location {
@@ -81,7 +89,18 @@ a.position-relative:hover img {
             {% for snippet in issue.matching_snippets %}
                 {% if "<mark>" in snippet.headline %}
                     <li>
+                        {% if snippet.has_ai_data %}
+                        <p>
+                            {% if snippet.ai_page_title %}<i>{{ snippet.ai_page_title }}</i> {% endif %}
+                            {% if snippet.ai_page_title and snippet.ai_story_title %} - {% endif %}
+                            {% if snippet.ai_story_title %}<span>{{ snippet.ai_story_title }}</span>{% endif %}
+                            <br>
+                            {% if snippet.ai_story_author %}<span>By {{ snippet.ai_story_author }}</span>{% endif %}
+                        </p>
+                        {% endif %}
+
                         {{ snippet.headline|safe }}
+
                         <a href="{{ snippet.get_page_link }}">[&nbsp;page&nbsp;{{ snippet.page }}&nbsp;]</a>
                     </li>
                 {% endif %}
