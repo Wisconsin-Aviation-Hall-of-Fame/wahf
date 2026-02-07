@@ -36,6 +36,8 @@ if not DEBUG and SENTRY_DSN:
     )
 
 
+GEMINI_API_KEY = env("GEMINI_API_KEY", default=None)
+
 EMAIL_BACKEND = env(
     "EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
 )

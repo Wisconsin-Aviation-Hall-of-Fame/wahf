@@ -41,6 +41,8 @@ class MagazineIssuePage(OpenGraphMixin, Page):
         on_delete=models.SET_NULL,
         related_name="+",
     )
+    ai_data = models.JSONField(default=dict)
+    ai_processed_datetime = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-date"]
@@ -196,6 +198,12 @@ class MagazinePage(models.Model):
     page = models.PositiveIntegerField(db_index=True)
     text = models.TextField(blank=True)
     guid = models.UUIDField(default=uuid.uuid4)
+
+    ai_page_title = models.CharField(max_length=250, blank=True, null=True)
+    ai_story_title = models.CharField(max_length=250, blank=True, null=True)
+    ai_story_author = models.CharField(max_length=250, blank=True, null=True)
+    ai_story_summary = models.TextField(blank=True, null=True)
+    ai_data = models.JSONField(default=dict)
 
     def get_filename(self, prefix):
         # 123/L2-<guid>.jpg
