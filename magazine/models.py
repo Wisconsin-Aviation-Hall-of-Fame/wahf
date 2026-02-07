@@ -226,6 +226,12 @@ class MagazinePage(models.Model):
     def get_page_link(self):
         return f"{self.issue.url}page-{self.page}"
 
+    @property
+    def ai_story_author_no_by(self) -> str:
+        if self.ai_story_author.startswith("By "):
+            return self.ai_story_author.replace("By ", "", 1)
+        return self.ai_story_author
+
     def get_ai_title(self):
         if not self.ai_page_title or not self.ai_story_title:
             return None
@@ -233,7 +239,7 @@ class MagazinePage(models.Model):
         chunks = [
             self.ai_page_title,
             self.ai_story_title,
-            f"By {self.ai_story_author}",
+            f"By {self.ai_story_author_no_by}",
             self.issue.title,
             f"Page {self.page}",
         ]
