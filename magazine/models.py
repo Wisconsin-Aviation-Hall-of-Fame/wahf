@@ -92,6 +92,25 @@ class MagazineIssuePage(OpenGraphMixin, Page):
         if not self.pages.filter(page=current_pagenum).exists():
             current_pagenum = 1
 
+        current_page = self.pages.filter(page=current_pagenum).get()
+
+        # Override the OG data
+        self.title = self.title
+        if current_pagenum > 1:
+            self.title += f" - Page {current_pagenum}"
+
+        # Description
+        clean_text = " ".join(current_page.text.split())
+        if len(clean_text) > 150:
+            clean_text = clean_text[: 150 - 3].strip() + "..."
+        self.search_description = clean_text
+
+        # Image
+        self.og_image_url = current_page.get_open_graph_url
+
+        # Canonical URLs
+        self.canonical_url = self.url
+
         context["current_pagenum"] = current_pagenum
         return context
 
@@ -140,6 +159,9 @@ class MagazineListPage(OpenGraphMixin, Page):
             .order_by("-date")
             .select_related("cover", "page_ptr")
         )
+
+        context["form"] = SearchForm()
+
         return context
 
     def get_graph_image(self):
@@ -177,7 +199,7 @@ class MagazinePage(models.Model):
 
     def get_filename(self, prefix):
         # 123/L2-<guid>.jpg
-        if prefix == "L":
+        if prefix in ["L", "OG"]:
             return f"{self.issue.pk}/{prefix}-{self.page:0>2}.jpg"
         else:
             return f"{self.issue.pk}/{prefix}{self.page}-{self.guid}.jpg"
@@ -202,6 +224,10 @@ class MagazinePage(models.Model):
         return self.get_filename("L")
 
     @property
+    def get_open_graph_filename(self):
+        return self.get_filename("OG")
+
+    @property
     def get_base_url(self):
         return f"{settings.MEDIA_URL}magazines/"
 
@@ -220,6 +246,10 @@ class MagazinePage(models.Model):
     @property
     def get_original_url(self):
         return f"{self.get_base_url}{self.get_original_filename}"
+
+    @property
+    def get_open_graph_url(self):
+        return f"{self.get_base_url}{self.get_open_graph_filename}"
 
     def __str__(self):
         return f"{self.issue} - page {self.page}"

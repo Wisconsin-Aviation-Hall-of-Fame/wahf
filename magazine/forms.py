@@ -6,8 +6,8 @@ class SearchForm(forms.Form):
         label="",
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Search...",
-                "class": "form-control",  # Useful if you use Bootstrap
+                "placeholder": "Search Forward in Flight...",
+                "class": "form-control",
             }
         ),
     )

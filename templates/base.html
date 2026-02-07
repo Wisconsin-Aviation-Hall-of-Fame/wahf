@@ -39,11 +39,22 @@
     <meta property="og:title" content="{{ page.title }}{% if page.subtitle %} - {{ page.subtitle }}{% endif %}{% if current_site.site_name %} - {{ current_site.site_name }}{% endif %}" >
     <meta name="twitter:title" content="{{ page.title }}{% if page.subtitle %} - {{ page.subtitle }}{% endif %}{% if current_site.site_name %} - {{ current_site.site_name }}{% endif %}">
     {% endblock %}
+
     <meta property="og:type" content="website" >
     <meta property="og:url" content="https://www.wahf.org{{ request.path }}" >
 
+    {% if page.canonical_url %}
+    <link rel="canonical" href="https://www.wahf.org{{ page.canonical_url }}" >
+    {% endif %}
+
     {% block ogimage %}
-    {% if page.og_image %}
+
+    {% if page.og_image_url %}
+    <meta property="og:image" content="https://www.wahf.org{{ page.og_image_url }}" >
+    <meta property="og:image:alt" content="{{ page.title }}" >
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    {% elif page.og_image %}
     {% image page.og_image original as og_fb_image %}
     <meta property="og:image" content="https://www.wahf.org{{ og_fb_image.url }}" >
     <meta property="og:image:alt" content="{% if page.og_image.caption %}{{ page.og_image.caption }}{% else %}{{ page.title }}{% endif %}" >
@@ -66,10 +77,6 @@
     {% endif %}
 
     {% endblock %}
-
-
-
-
 
 
     {% block ogdescription %}

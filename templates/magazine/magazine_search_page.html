@@ -26,17 +26,40 @@
     font-weight: 700;
 }
 
+.page-badge-overlay {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+/* Target the badge when the parent <a> is hovered */
+a.position-relative:hover .badge {
+    background-color: #007bff !important; /* WAHF Blue */
+    color: white;
+}
+
+/* Optional: Slight zoom effect on the image */
+a.position-relative img {
+    transition: transform 0.2s ease-in-out;
+}
+
+a.position-relative:hover img {
+    transform: scale(1.02);
+    filter: brightness(90%);
+}
+
 </style>
 {% endblock %}
 
 
 {% block content %}
 
-<form action="?" method="get" class="search-form">
+<form action="/forward-in-flight/search/?" method="get" class="search-form">
     <p>
         {{ form.query }}
     </p>
-    <button type="submit" class="btn btn-primary btn-large">Search Forward in Flight</button>
+    <button type="submit" class="btn btn-primary btn-large">Search</button>
 </form>
 
 
@@ -68,15 +91,23 @@
         <div class="col-6">
 
             {% with first_page=issue.pages.first %}
-                <a href="{{ first_page.get_page_link }}">
+                <a href="{{ first_page.get_page_link }}" class="position-relative d-inline-block text-decoration-none">
                     <img src="{{ first_page.get_small_url }}" alt="{{ issue }} - Page 1" loading="lazy">
                 </a>
 
                 {% for snippet in issue.matching_snippets %}
                     {% if snippet != first_page %}
-                        <a href="{{ snippet.get_page_link }}">
+                        <a href="{{ snippet.get_page_link }}" class="position-relative d-inline-block text-decoration-none">
                             <img src="{{ snippet.get_small_url }}" alt="{{ snippet.issue }} - Page {{ snippet.page }}" loading="lazy">
+
+                            <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-dark m-2 mb-3 px-2 py-1 page-badge-overlay"
+                                    style="z-index: 10; opacity: 0.9;"
+                                    onclick="window.location='{{ snippet.get_page_link }}';">
+                                        Page {{ snippet.page }}
+                            </span>
                         </a>
+
+
                     {% endif %}
                 {% endfor %}
 
