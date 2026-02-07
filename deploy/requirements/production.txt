@@ -31,3 +31,6 @@ user-agents==2.2.0
 playwright==1.58.0
 # playwright install chromium
 # sudo playwright install-deps chromium
+
+# for magazines
+# apt install poppler-utils

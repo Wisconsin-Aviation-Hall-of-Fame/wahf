@@ -1,18 +1,23 @@
 import uuid
 
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchHeadline, SearchQuery
 from django.db import models
+from django.db.models import Prefetch
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 from wagtail.fields import RichTextField
 from wagtail.models import Page
 from wagtail.url_routing import RouteResult
 
+from magazine.forms import SearchForm
 from wahf.mixins import OpenGraphMixin
 
 
 class MagazineIssuePage(OpenGraphMixin, Page):
     date = models.DateField(
-        help_text="Date of issue for this magazine release. Used for sorting issues by date."
+        help_text="Date of issue for this magazine release. Used for sorting issues by date.",
+        db_index=True,
     )
     volume_number = models.PositiveSmallIntegerField(null=True, blank=True)
     issue_number = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -154,6 +159,7 @@ class MagazineListPage(OpenGraphMixin, Page):
 
     subpage_types = [
         "magazine.MagazineIssuePage",
+        "magazine.MagazineSearchPage",
     ]
 
     parent_page_type = [
@@ -175,6 +181,9 @@ class MagazinePage(models.Model):
             return f"{self.issue.pk}/{prefix}-{self.page:0>2}.jpg"
         else:
             return f"{self.issue.pk}/{prefix}{self.page}-{self.guid}.jpg"
+
+    def get_page_link(self):
+        return f"{self.issue.url}page-{self.page}"
 
     @property
     def get_thumbnail_filename(self):
@@ -222,3 +231,66 @@ class MagazinePage(models.Model):
                 fields=["issue", "page"], name="issuepageuniquetogether"
             )
         ]
+        indexes = [
+            GinIndex(
+                fields=["text"], name="magazine_page_text", opclasses=["gin_trgm_ops"]
+            ),
+        ]
+
+
+class MagazineSearchPage(Page):
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+
+        form = SearchForm(request.GET)
+
+        if form.is_valid():
+            context["form"] = form
+
+            query_text = form.cleaned_data["query"]
+            context["query"] = query_text
+
+            query = SearchQuery(query_text)
+
+            # 1. Create a queryset for the children (the snippets)
+            snippet_qs = MagazinePage.objects.annotate(
+                headline=SearchHeadline(
+                    "text",
+                    query,
+                    start_sel="<mark>",
+                    stop_sel="</mark>",
+                )
+            ).filter(text__search=query)
+
+            # Include cover page
+            cover_qs = MagazinePage.objects.filter(
+                issue__in=snippet_qs.values("issue").distinct(), page=1
+            )
+
+            # 2. Query the Parents (Issues), prefetching only matching children
+            # We filter the parent to only those that HAVE matching children
+            search_results = (
+                MagazineIssuePage.objects.filter(pages__text__search=query)
+                .distinct()
+                .prefetch_related(
+                    Prefetch(
+                        "pages",
+                        queryset=snippet_qs | cover_qs,
+                        to_attr="matching_snippets",
+                    )
+                )
+                .order_by("-date")
+            )
+
+            context["count"] = search_results.count()
+            context["page_obj"] = search_results
+        else:
+            context["form"] = SearchForm()
+
+        return context
+
+    parent_page_type = [
+        "magazine.MagazineListPage",
+    ]
+
+    subpage_types = []

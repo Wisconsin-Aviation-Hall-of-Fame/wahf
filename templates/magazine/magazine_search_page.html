@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags wagtailimages_tags %}
+{% load image_tags %}
+
+
+{% block extra_css %}
+<style type="text/css">
+.page-row {
+    border-bottom: 1px solid #cecece;
+    padding: 10px 0 10px 0;
+}
+
+.page-row img {
+    border: 2px solid black;
+    margin-bottom: 4px;
+}
+
+.page-row li {
+    margin-bottom: 6px;
+}
+
+.search-location {
+    font-size: 1.5rem;
+    text-decoration: underline;
+    font-family: "Lora", serif;
+    font-weight: 700;
+}
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<form action="?" method="get" class="search-form">
+    <p>
+        {{ form.query }}
+    </p>
+    <button type="submit" class="btn btn-primary btn-large">Search Forward in Flight</button>
+</form>
+
+
+{% if query %}
+
+<div class="mt-4">
+    {{ count }} matches found
+</div>
+
+<hr>
+
+<div class="container">
+    {% for issue in page_obj %}
+    <div class="row page-row mb-3">
+        <div class="col-6">
+            <p class="search-location">{{ issue.title }}</p>
+
+            <ul>
+            {% for snippet in issue.matching_snippets %}
+                {% if "<mark>" in snippet.headline %}
+                    <li>
+                        {{ snippet.headline|safe }}
+                        <a href="{{ snippet.get_page_link }}">[&nbsp;page&nbsp;{{ snippet.page }}&nbsp;]</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            </ul>
+        </div>
+        <div class="col-6">
+            {% for snippet in issue.matching_snippets %}
+            <a href="{{ snippet.get_page_link }}">
+                <img src="{{ snippet.get_small_url }}" alt="{{ snippet.issue }} - Page {{ snippet.page }}" loading="lazy">
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endif %}
+
+
+{% endblock %}
