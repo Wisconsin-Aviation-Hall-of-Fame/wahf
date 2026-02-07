@@ -30,6 +30,15 @@
     font-weight: bold;
 }
 
+.inductee-updated-header {
+    border-top: 2px solid #cecece;
+    padding: 15px 10px 10px 10px;
+    margin-top: 25px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: #fcf8e3;
+}
+
 .header-links-sorting a {
     text-transform: uppercase;
     padding-left: 10px;
@@ -45,6 +54,7 @@
     <p>
         <a href="?">By Name</a> |
         <a href="?year">By Year Inducted</a> |
+        <a href="?updated">Updated Recently</a> |
         <a href="{% url "inductees_map" %}">View Inductee Map</a>
     </p>
 </div>
@@ -61,6 +71,18 @@
                     <i>Inductee Year Not Available</i>
                 {% endif %}
             </div>
+        {% endifchanged %}
+    {% endif %}
+
+    {% if view_type == "updated" %}
+        {% ifchanged inductee.last_published_at|date:"Y" %}
+        <div class="inductee-updated-header">
+            {% if inductee.last_published_at|date:"Y" != "2023" %}
+                Inductee Profile Updated in {{ inductee.last_published_at|date:"Y" }}
+            {% else %}
+                Not Recently Updated
+            {% endif %}
+        </div>
         {% endifchanged %}
     {% endif %}
 

@@ -460,6 +460,9 @@ class InducteeListPage(OpenGraphMixin, Page):
         if "year" in request.GET:
             order_by.insert(0, F("inducted_date").desc(nulls_last=True))
             context["view_type"] = "year"
+        elif "updated" in request.GET:
+            order_by.insert(0, F("last_published_at").desc())
+            context["view_type"] = "updated"
         else:
             context["view_type"] = "name"
 
