@@ -99,13 +99,18 @@ class MagazineIssuePage(OpenGraphMixin, Page):
         # Override the OG data
         self.title = self.title
         if current_pagenum > 1:
-            self.title += f" - Page {current_pagenum}"
+            proposed_title = current_page.get_ai_title()
+            if proposed_title:
+                self.title = proposed_title
 
         # Description
-        clean_text = " ".join(current_page.text.split())
-        if len(clean_text) > 150:
-            clean_text = clean_text[: 150 - 3].strip() + "..."
-        self.search_description = clean_text
+        if current_page.ai_story_summary:
+            self.search_description = current_page.ai_story_summary
+        else:
+            clean_text = " ".join(current_page.text.split())
+            if len(clean_text) > 150:
+                clean_text = clean_text[: 150 - 3].strip() + "..."
+            self.search_description = clean_text
 
         # Image
         self.og_image_url = current_page.get_open_graph_url
@@ -214,6 +219,21 @@ class MagazinePage(models.Model):
 
     def get_page_link(self):
         return f"{self.issue.url}page-{self.page}"
+
+    def get_ai_title(self):
+        if not self.ai_page_title or not self.ai_story_title:
+            return None
+
+        chunks = [
+            self.ai_page_title,
+            self.ai_story_title,
+            f"By {self.ai_story_author}",
+            self.issue.title,
+            f"Page {self.page}",
+        ]
+        filtered_chunks = [x for x in chunks if x is not None]
+
+        return " - ".join(filtered_chunks)
 
     @property
     def get_thumbnail_filename(self):

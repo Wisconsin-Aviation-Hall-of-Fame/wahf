@@ -14,14 +14,19 @@ from magazine.models import MagazineIssuePage, MagazinePage
 def process_data(magazine, data):
     print(magazine)
     for p in data:
-        print(p["page_number"], p["page_title"], p["story_title"], p["story_author"])
-        print("   - ", p["story_summary"])
+        print(
+            p["page_number"],
+            p.get("page_title"),
+            p.get("story_title"),
+            p.get("story_author"),
+        )
+        print("   - ", p.get("story_teaser"))
 
         MagazinePage.objects.filter(issue=magazine, page=p["page_number"]).update(
-            ai_page_title=p["page_title"][:250] if p["page_title"] else None,
-            ai_story_title=p["story_title"][:250] if p["story_title"] else None,
-            ai_story_author=p["story_author"][:250] if p["story_author"] else None,
-            ai_story_summary=p["story_summary"],
+            ai_page_title=p["page_title"][:250] if p.get("page_title") else None,
+            ai_story_title=p["story_title"][:250] if p.get("story_title") else None,
+            ai_story_author=p["story_author"][:250] if p.get("story_author") else None,
+            ai_story_summary=p.get("story_teaser"),
             ai_data=p,
         )
 
@@ -65,10 +70,19 @@ class Command(BaseCommand):
                     model="gemini-2.5-flash-lite",
                     contents=[
                         uploaded_file,
-                        "Extract page metadata: page_number, page_title, story_title, story_author, story_summary.",
+                        "Extract page metadata: page_number, page_title, story_title, story_author, story_teaser.",
                     ],
                     config=types.GenerateContentConfig(
-                        system_instruction="Output strictly valid JSON list only.",
+                        system_instruction=(
+                            "You are a professional metadata librarian. Your task is to extract "
+                            "concise page-level summaries for a magazine archive. "
+                            "CRITICAL STYLE RULES:\n"
+                            "1. NEVER start a story_teaser with 'This article', 'This section', 'This page', or 'This announcement'.\n"
+                            "2. JUMP DIRECTLY into the content. Start with an active verb or the subject.\n"
+                            "3. Use varied sentence structures to ensure a natural flow.\n"
+                            "4. Output strictly valid JSON with this schema: "
+                            "[{'page_number': int, 'page_title': str, 'story_title': str, 'story_author': str, 'story_teaser': str}]"
+                        ),
                         response_mime_type="application/json",
                     ),
                 )
