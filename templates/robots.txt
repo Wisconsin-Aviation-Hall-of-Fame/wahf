@@ -1,8 +1,5 @@
 User-agent: *
 Disallow: /django-admin
 Disallow: /cms
-Disallow: /documents
-Disallow: /accounts
-Disallow: /account/member-profile
 
 Sitemap: https://www.wahf.org/sitemap.xml
