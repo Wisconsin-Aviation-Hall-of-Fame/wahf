@@ -12,4 +12,4 @@ mccabe
 
 django-debug-toolbar
 
-opencv-python==4.12.0.88
+opencv-python==4.13.0.92

@@ -275,10 +275,6 @@ STRIPE_LIVE_MODE = env.bool(
     "STRIPE_LIVE_MODE", default=False
 )  # Change to True in production
 
-# USPS Address Validation
-USPS_USERNAME = env("USPS_USERNAME", default=None)
-USPS_PASSWORD = env("USPS_PASSWORD", default=None)
-
 
 SESSION_COOKIE_SECURE = DEBUG
 CSRF_COOKIE_SECURE = False
