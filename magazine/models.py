@@ -50,6 +50,11 @@ class MagazineIssuePage(OpenGraphMixin, Page):
     def __str__(self):
         return self.get_admin_display_title()
 
+    def save(self, *args, **kwargs):
+        if not self.ai_data:
+            self.ai_data = {}
+        super().save(*args, **kwargs)
+
     def get_graph_image_url(self):
         if self.cover:
             return self.cover.full_url
