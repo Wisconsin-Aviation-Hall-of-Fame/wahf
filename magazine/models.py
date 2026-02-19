@@ -41,7 +41,7 @@ class MagazineIssuePage(OpenGraphMixin, Page):
         on_delete=models.SET_NULL,
         related_name="+",
     )
-    ai_data = models.JSONField(default=dict)
+    ai_data = models.JSONField(default=dict, blank=True)
     ai_processed_datetime = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -49,11 +49,6 @@ class MagazineIssuePage(OpenGraphMixin, Page):
 
     def __str__(self):
         return self.get_admin_display_title()
-
-    def save(self, *args, **kwargs):
-        if not self.ai_data:
-            self.ai_data = {}
-        super().save(*args, **kwargs)
 
     def get_graph_image_url(self):
         if self.cover:
