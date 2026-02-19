@@ -6,6 +6,7 @@ from wagtail.models import Orderable, Page
 
 from content.models import InducteeDetailPage
 from wahf.mixins import OpenGraphMixin
+from magazine.models import MagazineIssuePage, MagazinePage
 
 
 class HomePageCard(models.Model):
@@ -83,5 +84,13 @@ class HomePage(OpenGraphMixin, Page):
             .select_related("photo")
             .order_by("?")[0:36]
         )
+
+        issue = MagazineIssuePage.objects.live().order_by("-date").first()
+        if issue:
+            stories = MagazinePage.objects.filter(
+                issue=issue, story_title__isnull=False
+            ).order_by("page")
+            context["frontpage_issue"] = issue
+            context["frontpage_stories"] = stories
 
         return context

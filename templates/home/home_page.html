@@ -103,6 +103,57 @@ figcaption {
     font-size: calc(1.425rem + .9vw);
 }
 
+.issue-row {
+    margin-bottom: 12px;
+
+    padding: 20px 10px 20px 20px;
+
+    background: #f7f7f7;
+    border: 5px solid #eaeaea;
+    border-radius: var(--bs-border-radius) !important;
+}
+
+.issue-cover {
+    vertical-align: middle;
+}
+
+.story-container {
+    background: white;
+    break-inside: avoid;
+    display: block;
+    margin-bottom: 14px;
+
+    border-left: 5px solid #0085cb;
+    border-top: 2px solid #111;
+    border-right: 2px solid #111;
+    border-bottom: 2px solid #111;
+
+    border-radius: var(--bs-border-radius) !important;
+    padding: 5px;
+}
+
+.story-wrapper a {
+    color: black;
+}
+
+.story-title {
+    font-size: 1.4rem;
+    font-family: "Lora", serif;
+    font-weight: 700;
+}
+
+.story-heading {
+    color: #7e7e7e;
+    text-transform: uppercase;
+    font-family: "RobotoCondensed", monospace;
+}
+
+.story-image {
+    width: 85px;
+    height: auto;
+    border: 1px solid #cecece;
+}
+
 </style>
 
 {% endblock %}
@@ -119,6 +170,45 @@ figcaption {
 {% endblock %}
 
 {% block content %}
+
+{% if frontpage_issue %}
+<div class="row issue-row">
+    <div class="col-4 issue-cover">
+        {% image frontpage_issue.cover height-600 class="img-thumbnail img-fluid" %}
+    </div>
+    <div class="col-8">
+
+        <div style="column-count: 2; column-gap: 30px;">
+            {% for story in frontpage_stories %}
+                <div class="story-container">
+
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            {# Fixed the variable name from 'snippet' to 'story' #}
+                            <a href="{{ story.get_page_link }}">
+                                <img src="{{ story.get_small_url }}" class="story-image">
+                            </a>
+                        </div>
+
+                        <div class="flex-grow-1 ms-3 story-wrapper">
+                            <a href="{{ story.get_page_link }}" class="text-decoration-none d-block">
+                                {% if story.story_heading %}
+                                    <div class="story-heading">{{ story.story_heading }}</div>
+                                {% endif %}
+                                <div class="story-title" style="font-weight: bold;">{{ story.story_title }}</div>
+
+                                <div class="story-author" style="font-size: 0.9em;">{{ story.story_author }}</div>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+{% endif %}
 
 
 <div class="row">

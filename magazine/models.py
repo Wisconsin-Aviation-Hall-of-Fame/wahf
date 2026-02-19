@@ -210,6 +210,17 @@ class MagazinePage(models.Model):
     ai_story_summary = models.TextField(blank=True, null=True)
     ai_data = models.JSONField(default=dict)
 
+    story_title = models.CharField(max_length=250, blank=True, null=True, db_index=True)
+    story_heading = models.CharField(max_length=250, blank=True, null=True)
+    story_author = models.CharField(max_length=250, blank=True, null=True)
+    story_article_page = models.ForeignKey(
+        "content.ArticlePage",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="magazine_pages",
+    )
+
     @property
     def has_ai_data(self):
         if self.ai_page_title or self.ai_story_title or self.ai_story_author:
