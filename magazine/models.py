@@ -94,26 +94,27 @@ class MagazineIssuePage(OpenGraphMixin, Page):
         if not self.pages.filter(page=current_pagenum).exists():
             current_pagenum = 1
 
-        current_page = self.pages.filter(page=current_pagenum).get()
+        current_page = self.pages.filter(page=current_pagenum).first()
 
-        # Override the OG data
-        self.title = self.title
-        if current_pagenum > 1:
-            proposed_title = current_page.get_ai_title()
-            if proposed_title:
-                self.title = proposed_title
+        if current_page:
+            # Override the OG data
+            self.title = self.title
+            if current_pagenum > 1:
+                proposed_title = current_page.get_ai_title()
+                if proposed_title:
+                    self.title = proposed_title
 
-        # Description
-        if current_page.ai_story_summary:
-            self.search_description = current_page.ai_story_summary
-        else:
-            clean_text = " ".join(current_page.text.split())
-            if len(clean_text) > 150:
-                clean_text = clean_text[: 150 - 3].strip() + "..."
-            self.search_description = clean_text
+            # Description
+            if current_page.ai_story_summary:
+                self.search_description = current_page.ai_story_summary
+            else:
+                clean_text = " ".join(current_page.text.split())
+                if len(clean_text) > 150:
+                    clean_text = clean_text[: 150 - 3].strip() + "..."
+                self.search_description = clean_text
 
-        # Image
-        self.og_image_url = current_page.get_open_graph_url
+            # Image
+            self.og_image_url = current_page.get_open_graph_url
 
         # Canonical URLs
         self.canonical_url = self.url
