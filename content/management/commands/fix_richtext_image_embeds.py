@@ -100,17 +100,24 @@ class Command(BaseCommand):
 
         for ModelClass, field_name in stream_field_models:
             for instance in ModelClass.objects.all():
-                raw_json = (
+                raw = (
                     instance.__class__.objects.filter(pk=instance.pk)
                     .values_list(field_name, flat=True)
                     .first()
                 )
-                if not raw_json:
+                if not raw:
                     continue
 
-                try:
-                    blocks = json.loads(raw_json)
-                except (json.JSONDecodeError, TypeError):
+                # use_json_field=True returns a Python list; older fields return a string
+                if isinstance(raw, str):
+                    try:
+                        blocks = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                else:
+                    blocks = raw
+
+                if not isinstance(blocks, list):
                     continue
 
                 changed = False
@@ -137,8 +144,12 @@ class Command(BaseCommand):
                             changed = True
 
                 if fix and changed:
+                    # use_json_field=True expects a Python list; string fields expect JSON
+                    save_value = (
+                        blocks if not isinstance(raw, str) else json.dumps(blocks)
+                    )
                     ModelClass.objects.filter(pk=instance.pk).update(
-                        **{field_name: json.dumps(blocks)}
+                        **{field_name: save_value}
                     )
                     self.stdout.write(
                         f"  -> fixed {ModelClass.__name__} pk={instance.pk}"
