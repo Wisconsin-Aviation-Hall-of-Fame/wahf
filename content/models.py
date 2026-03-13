@@ -724,6 +724,7 @@ class FreeformPage(OpenGraphMixin, Page):
             ("heading", blocks.CharBlock(form_classname="title")),
             ("paragraph", blocks.RichTextBlock()),
             ("image", ImageChooserBlock()),
+            ("html", RawHTMLBlock()),
         ],
         use_json_field=True,
     )

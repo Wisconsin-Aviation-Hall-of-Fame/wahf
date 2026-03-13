@@ -17,6 +17,8 @@
     {% elif block.block_type == 'image' %}
         {% image block.value original class="img-fluid" %}
         {% caption block.value %}
+    {% else %}
+        {{ block }}
     {% endif %}
 {% endfor %}
 
