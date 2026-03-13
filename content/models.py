@@ -24,6 +24,7 @@ from wagtail.images.blocks import ImageChooserBlock
 from wagtail.models import Orderable, Page
 from wagtail.snippets.models import register_snippet
 
+from wagtail.blocks import RawHTMLBlock
 from content.blocks import BlockQuoteBlock, EditorsNoteBlock
 from wahf.mixins import OpenGraphMixin
 
@@ -243,12 +244,32 @@ class ArticlePage(OpenGraphMixin, Page):
             (
                 "paragraph",
                 blocks.RichTextBlock(
-                    # features=["bold", "italic", "link", "text-highlight"]
+                    features=[
+                        "h2",
+                        "h3",
+                        "h4",
+                        "bold",
+                        "italic",
+                        "link",
+                        "document-link",
+                        "ol",
+                        "ul",
+                        "hr",
+                        "image",
+                        "embed",
+                        "code",
+                        "superscript",
+                        "subscript",
+                        "strikethrough",
+                        "blockquote",
+                        "text-highlight",
+                    ]
                 ),
             ),
             ("image", ImageChooserBlock()),
             ("blockquote", BlockQuoteBlock()),
             ("editorsnote", EditorsNoteBlock()),
+            ("html", RawHTMLBlock()),
         ],
         use_json_field=True,
     )
