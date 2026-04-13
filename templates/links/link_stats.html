@@ -1,0 +1,45 @@
+{% extends "wagtailadmin/base.html" %}
+{% load wagtailadmin_tags %}
+
+{% block content %}
+    <header class="nice-padding">
+        <div class="row header-inner">
+            <div class="col6">
+                <h1>Link Statistics</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="nice-padding">
+        {% if link_stats %}
+            <table class="listing full-width">
+                <thead>
+                    <tr>
+                        <th class="title">Link Name</th>
+                        <th>Short URL</th>
+                        <th style="width: 110px; text-align: center;">Last 30 Days</th>
+                        <th style="width: 110px; text-align: center;">Last 90 Days</th>
+                        <th style="width: 110px; text-align: center;">Last Year</th>
+                        <th style="width: 80px; text-align: center;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for link in link_stats %}
+                    <tr>
+                        <td class="title">{{ link.name }}</td>
+                        <td>
+                            <a href="https://wahf.org/q/{{ link.slug }}" target="_blank">https://wahf.org/q/{{ link.slug }}</a>
+                        </td>
+                        <td style="text-align: center;">{{ link.clicks_30d }}</td>
+                        <td style="text-align: center;">{{ link.clicks_90d }}</td>
+                        <td style="text-align: center;">{{ link.clicks_365d }}</td>
+                        <td style="text-align: center;"><strong>{{ link.total_clicks }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No short links found.</p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -8,6 +8,7 @@ from wagtail.contrib.sitemaps.views import sitemap
 from wagtail.documents import get_document_model
 
 from content import views as content_views
+from links import views as link_views
 from content.views import log_document_download_and_serve
 from membership import views as membership_views
 from membership import views_donations as membership_views_donations
@@ -30,6 +31,9 @@ urlpatterns = [
         name="wagtaildocs_serve",
     ),
     path("download-stats/", content_views.download_stats_view, name="download_stats"),
+    path("q/<int:pk>", link_views.redirect_short_link, name="short_link_redirect_pk"),
+    path("q/<slug:slug>", link_views.redirect_short_link, name="short_link_redirect"),
+    path("link-stats/", link_views.link_stats_view, name="link_stats"),
     path(
         "kohn/donate",
         membership_views_donations.KohnDonateRedirect.as_view(),

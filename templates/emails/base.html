@@ -145,7 +145,7 @@ table.body .article {
                         </p>
 
                         {% block body %}
-                        {{ body }}
+                        {{ body|safe }}
                         {% endblock %}
 
                       </td>
