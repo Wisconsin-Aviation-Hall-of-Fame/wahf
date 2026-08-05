@@ -7,7 +7,7 @@ User=wahf
 Group=wahf
 WorkingDirectory=/home/wahf/wahf.org
 EnvironmentFile=/home/wahf/wahf.org/.env
-ExecStart=/home/roka/production/.direnv/python-3.14/bin/gunicorn \
+ExecStart=/home/wahf/production/.direnv/python-3.14/bin/gunicorn \
     --bind 127.0.0.1:8000 \
     wahf.wsgi:application
 Restart=on-failure
