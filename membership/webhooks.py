@@ -140,7 +140,7 @@ def process_banquet_tickets(obj, session):
     )
 
     msg = EmailMultiAlternatives(
-        f"WAHF 2025 Investiture Dinner and Ceremony - RSVP Confirmation - {name}",
+        f"WAHF 2026 Investiture Dinner and Ceremony - RSVP Confirmation - {name}",
         html2text(confirmation_body),
         "Rose Dorcey <rose@wahf.org>",
         [email],
