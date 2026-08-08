@@ -50,6 +50,19 @@ def find_match(pdf_stem: str, candidates: dict[str, Path]):
     ]
     if len(fuzzy) == 1:
         return fuzzy[0][1], "fuzzy"
+
+    # Loosest tier: one normalized name is a prefix of the other, e.g. a
+    # "_small"/compressed variant PDF that was OCR'd under a different name
+    # than the one currently attached to the issue.
+    prefix_matches = [
+        (name, path)
+        for name, path in candidates.items()
+        if normalize(name).startswith(normalized_target)
+        or normalized_target.startswith(normalize(name))
+    ]
+    if len(prefix_matches) == 1:
+        return prefix_matches[0][1], "fuzzy-prefix"
+
     return None, None
 
 
