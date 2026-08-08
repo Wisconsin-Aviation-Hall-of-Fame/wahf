@@ -14,8 +14,21 @@ from magazine.models import MagazineIssuePage, MagazinePage
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--issue",
+            action="append",
+            type=int,
+            dest="issues",
+            help="MagazineIssuePage pk to process (repeatable). Default: all issues.",
+        )
+
     def handle(self, *args, **options):
-        for mag in MagazineIssuePage.objects.all():
+        magazines = MagazineIssuePage.objects.all()
+        if options["issues"]:
+            magazines = magazines.filter(pk__in=options["issues"])
+
+        for mag in magazines:
             if not mag.download_pdf:
                 print(f"{mag} has no PDF set")
                 continue

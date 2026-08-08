@@ -38,14 +38,26 @@ def process_data(magazine, data):
 class Command(BaseCommand):
     help = "Extracts magazine metadata into strictly structured JSON using Gemini."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--issue",
+            action="append",
+            type=int,
+            dest="issues",
+            help=(
+                "MagazineIssuePage pk to process (repeatable). Default: all "
+                "issues with ai_processed_datetime still null."
+            ),
+        )
+
     def handle(self, *args, **options):
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-        magazine_qs = (
-            MagazineIssuePage.objects.filter(ai_processed_datetime__isnull=True)
-            .order_by("-date")
-            .all()
-        )
+        magazine_qs = MagazineIssuePage.objects.order_by("-date")
+        if options["issues"]:
+            magazine_qs = magazine_qs.filter(pk__in=options["issues"])
+        else:
+            magazine_qs = magazine_qs.filter(ai_processed_datetime__isnull=True)
         for magazine in magazine_qs:
             pdf_path = f"{settings.MEDIA_ROOT}/{magazine.download_pdf.file}"
             pdf_name = pdf_path.rsplit("/", 1)[1]
