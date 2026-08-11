@@ -40,6 +40,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
 from archives.models import WAHFImage
 from content.models import ArticleAuthor, ArticleListPage, ArticlePage, FourtyYearsStory
@@ -47,31 +48,32 @@ from content.models import ArticleAuthor, ArticleListPage, ArticlePage, FourtyYe
 DEFAULT_SOURCE_DIR = "restore"
 DEFAULT_MASTER_LIST_GLOB = "master list*.html"
 
-# The real FourtyYearsStory.article_number (descending display order, out of
-# the full 40) and the weekly publish-date schedule for this restore batch -
-# both assigned externally (a planning spreadsheet), not derivable from the
-# Wayback captures themselves. website_publish_date drives sort order on the
-# site and must be this schedule date, not the article's own historical
-# byline date (ArticlePage.date, which stays as originally published).
+# The real FourtyYearsStory.article_number (#1 = Carl Guell, ascending in the
+# same order as the wahf.org/40/ master list) and the weekly publish-date
+# schedule for this restore batch - both assigned externally (a planning
+# spreadsheet), not derivable from the Wayback captures themselves.
+# website_publish_date drives sort order on the site and must be this
+# schedule date, not the article's own historical byline date
+# (ArticlePage.date, which stays as originally published).
 RESTORE_SCHEDULE = {
-    "wahf-founder-carl-guell": (date(2026, 1, 7), 40),
-    "the-archie-henkelmann-story": (date(2026, 1, 14), 39),
-    "the-shooting-down-of-admiral-yamamoto": (date(2026, 1, 21), 38),
-    "bill-lotzer-and-gran-aire": (date(2026, 1, 28), 37),
-    "milwaukees-steel-curtain": (date(2026, 2, 4), 36),
-    "the-bob-lussow-story": (date(2026, 2, 11), 35),
+    "wahf-founder-carl-guell": (date(2026, 1, 7), 1),
+    "the-archie-henkelmann-story": (date(2026, 1, 14), 2),
+    "the-shooting-down-of-admiral-yamamoto": (date(2026, 1, 21), 3),
+    "bill-lotzer-and-gran-aire": (date(2026, 1, 28), 4),
+    "milwaukees-steel-curtain": (date(2026, 2, 4), 5),
+    "the-bob-lussow-story": (date(2026, 2, 11), 6),
     "arnold-ebneter-from-golden-age-of-aviation-to-world-record": (
         date(2026, 2, 18),
-        34,
+        7,
     ),
-    "tales-of-the-aces": (date(2026, 2, 25), 33),
-    "logging-time-with-paul-poberezny": (date(2026, 3, 4), 32),
-    "lieutenant-gerald-stull-ditches-in-lake-monona": (date(2026, 3, 11), 31),
-    "when-the-rescuers-become-rescued-major-knitter": (date(2026, 3, 18), 30),
-    "a-stearman-homecoming": (date(2026, 3, 25), 29),
-    "the-us-air-force-academy": (date(2026, 4, 1), 28),
-    "gilbert-greens-flying-days": (date(2026, 4, 8), 27),
-    "keep-em-flying-bouchards-four-generations-of-flight": (date(2026, 4, 15), 26),
+    "tales-of-the-aces": (date(2026, 2, 25), 8),
+    "logging-time-with-paul-poberezny": (date(2026, 3, 4), 9),
+    "lieutenant-gerald-stull-ditches-in-lake-monona": (date(2026, 3, 11), 10),
+    "when-the-rescuers-become-rescued-major-knitter": (date(2026, 3, 18), 11),
+    "a-stearman-homecoming": (date(2026, 3, 25), 12),
+    "the-us-air-force-academy": (date(2026, 4, 1), 13),
+    "gilbert-greens-flying-days": (date(2026, 4, 8), 14),
+    "keep-em-flying-bouchards-four-generations-of-flight": (date(2026, 4, 15), 15),
 }
 
 # Wagtail appends an 8-char base32-ish suffix like "_3YIWYov" to dedupe
@@ -637,46 +639,62 @@ class Command(BaseCommand):
         if not commit:
             return
 
-        author = self.get_or_update_author(
-            article["author_name"],
-            author_image,
-            article["about_author_email"],
-            article["about_author_blurb"],
+        conflicting_story = (
+            FourtyYearsStory.objects.filter(article_number=article_number)
+            .exclude(article__slug=slug)
+            .first()
         )
+        if conflicting_story:
+            self.stdout.write(
+                self.style.ERROR(
+                    f"    ! article_number={article_number} is already used by "
+                    f"{conflicting_story.article.slug!r} (FourtyYearsStory pk="
+                    f"{conflicting_story.pk}) - skipping, fix RESTORE_SCHEDULE and re-run"
+                )
+            )
+            return
 
-        field_values = dict(
-            title=title,
-            subtitle=article["subtitle"],
-            author=author,
-            date=article["date"],
-            website_publish_date=website_publish_date,
-            image=first_image,
-            short_description=short_description,
-            top_badge=article["top_badge"],
-            body=body_blocks,
-        )
+        with transaction.atomic():
+            author = self.get_or_update_author(
+                article["author_name"],
+                author_image,
+                article["about_author_email"],
+                article["about_author_blurb"],
+            )
 
-        if existing_page:
-            for field, value in field_values.items():
-                setattr(existing_page, field, value)
-            existing_page.save()
-            existing_page.save_revision()
-            page = existing_page
-            action = "updated"
-        else:
-            page = ArticlePage(slug=slug, live=False, **field_values)
-            parent_page.add_child(instance=page)
-            page.save_revision()
-            action = "created"
+            field_values = dict(
+                title=title,
+                subtitle=article["subtitle"],
+                author=author,
+                date=article["date"],
+                website_publish_date=website_publish_date,
+                image=first_image,
+                short_description=short_description,
+                top_badge=article["top_badge"],
+                body=body_blocks,
+            )
 
-        FourtyYearsStory.objects.update_or_create(
-            article=page,
-            defaults={
-                "article_number": article_number,
-                "short_title": story_short_title[:250],
-                "image": story_image,
-            },
-        )
+            if existing_page:
+                for field, value in field_values.items():
+                    setattr(existing_page, field, value)
+                existing_page.save()
+                existing_page.save_revision()
+                page = existing_page
+                action = "updated"
+            else:
+                page = ArticlePage(slug=slug, live=False, **field_values)
+                parent_page.add_child(instance=page)
+                page.save_revision()
+                action = "created"
+
+            FourtyYearsStory.objects.update_or_create(
+                article=page,
+                defaults={
+                    "article_number": article_number,
+                    "short_title": story_short_title[:250],
+                    "image": story_image,
+                },
+            )
 
         self.stdout.write(
             self.style.SUCCESS(f"    -> {action} draft ArticlePage id={page.pk}")
