@@ -156,6 +156,10 @@ class Command(BaseCommand):
 
             if article["tags"]:
                 page.tags.add(*article["tags"])
+                # ClusterTaggableManager .add() on a ParentalKey through-model
+                # only stages the relation in memory - it isn't flushed to the
+                # DB until the ClusterableModel is saved.
+                page.save()
 
         self.stdout.write(
             self.style.SUCCESS(f"    -> created ArticlePage id={page.pk}")
