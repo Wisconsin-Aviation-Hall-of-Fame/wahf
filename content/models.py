@@ -1,8 +1,9 @@
 import datetime
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils.text import slugify
 from django_extensions.db.fields import AutoSlugField
 from modelcluster.fields import ParentalKey
@@ -334,7 +335,20 @@ class ArticlePage(OpenGraphMixin, Page):
 class FourtyYearsStory(models.Model):
     article_number = models.PositiveSmallIntegerField(unique=True)
     article = models.OneToOneField(
-        "content.ArticlePage", related_name="fourty_article", on_delete=models.CASCADE
+        "content.ArticlePage",
+        related_name="fourty_article",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text="Link to an article OR an inductee page (not both).",
+    )
+    inductee_page = models.OneToOneField(
+        "content.InducteeDetailPage",
+        related_name="fourty_story",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text="Link to an inductee page OR an article (not both).",
     )
     short_title = models.CharField(
         max_length=250, help_text="Shorter version of the title for the 40th page."
@@ -353,6 +367,17 @@ class FourtyYearsStory(models.Model):
 
     def __str__(self):
         return f"#{self.article_number} - {self.short_title}"
+
+    def clean(self):
+        super().clean()
+        if bool(self.article_id) == bool(self.inductee_page_id):
+            raise ValidationError(
+                "Choose either an article or an inductee page (exactly one)."
+            )
+
+    @property
+    def page(self):
+        return self.article or self.inductee_page
 
 
 class FourtyYearsFourtyStoriesListPage(OpenGraphMixin, Page):
@@ -382,11 +407,13 @@ class FourtyYearsFourtyStoriesListPage(OpenGraphMixin, Page):
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
 
-        qs = FourtyYearsStory.objects.select_related("article", "image")
+        qs = FourtyYearsStory.objects.select_related(
+            "article", "inductee_page", "image"
+        )
 
         # Only show live stories to public
         if not request.user.is_authenticated:
-            qs = qs.filter(article__live=True)
+            qs = qs.filter(Q(article__live=True) | Q(inductee_page__live=True))
 
         context["articles_list"] = qs.all()
 
