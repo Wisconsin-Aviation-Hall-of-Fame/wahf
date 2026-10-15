@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 # 2. Generate content with structured JSON
                 # The new SDK handles 'response_mime_type' inside a config object
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash-lite",
+                    model="gemini-3.8-flash",
                     contents=[
                         uploaded_file,
                         "Extract page metadata: page_number, page_title, story_title, story_author, story_teaser.",
